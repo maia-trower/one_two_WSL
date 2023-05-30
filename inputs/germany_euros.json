@@ -1,0 +1,11 @@
+{
+  "competition_id": 53,
+  "season_id": 106,
+  "team_name": "Germany Women\'s",
+  "path_to_360": "/home/s2113337/Documents/GitHub/open-data/data/three-sixty",
+  "threshold_seconds": 5,
+  "threshold_progression": 0.75,
+  "threshold_carry": 5,
+  "fig_path": "plots/",
+  "data_save_path": "data/"
+}

@@ -1,12 +1,12 @@
 from one_two.functions import get_pass_data, get_one_twos, plot_match_one_twos
+import pickle
+import json
 
 
-def main():
+def main(country):
     # load in dictionary of inputs here
-    # hard code temporarily
-    inputs = {"competition_id": 53, "season_id": 106, "team_name": "England Women\'s",
-              "path_to_360": "/home/s2113337/Documents/GitHub/open-data/data/three-sixty", "threshold_seconds": 5,
-              "threshold_progression": 0.75, "threshold_carry": 5, "fig_path": "plots/"}
+    with open(f"inputs/{country}_euros.json", "r") as f:
+        inputs = json.load(f)
 
     comp = inputs["competition_id"]
     season = inputs["season_id"]
@@ -16,8 +16,13 @@ def main():
     p_thresh = inputs["threshold_progression"]
     c_thresh = inputs["threshold_carry"]
     figpath = inputs["fig_path"]
+    save_data = inputs["data_save_path"]
 
     all_matches = get_pass_data(competition_ID=comp, season_ID=season, team=team, data_path=path)
+
+    # save dictionary as pickle file
+    with open(f"{save_data}{comp}_{season}_{team}.pickle", "wb") as f:
+        pickle.dump(all_matches, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     for key in all_matches.keys():
         one_twos = get_one_twos(match=all_matches[key], sec_threshold=sec_thresh, prog_threshold=p_thresh, carry_threshold=c_thresh)
@@ -27,4 +32,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main("germany")
