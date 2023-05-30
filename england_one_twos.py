@@ -25,6 +25,7 @@ def main(country):
         pickle.dump(all_matches, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     for key in all_matches.keys():
+        print(key)
         one_twos = get_one_twos(match=all_matches[key], sec_threshold=sec_thresh, prog_threshold=p_thresh, carry_threshold=c_thresh)
 
         plot_path = figpath + f"{comp}_{season}_{team}_{key}.png"

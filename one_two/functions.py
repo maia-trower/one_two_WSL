@@ -19,6 +19,7 @@ def get_pass_data(competition_ID, season_ID, team, data_path):
     matches_df = sb.matches(competition_id=competition_ID, season_id=season_ID)
 
     # get id number of all matches played by specified team (home & away)
+    team = f"{team} Women's"
     match_ids = np.concatenate([np.array(matches_df[matches_df["home_team"]==team]["match_id"]), np.array(matches_df[matches_df["away_team"]==team]["match_id"])])
 
     # loop through all matches for the team
