@@ -7,5 +7,7 @@
   "threshold_progression": 0.75,
   "threshold_carry": 5,
   "fig_path": "plots/",
-  "data_save_path": "data/"
+  "data_save_path": "data/",
+  "to_save": 1
+
 }
