@@ -24,7 +24,7 @@ def get_pass_data(competition_ID, season_ID, team, data_path):
     match_ids = np.concatenate([np.array(matches_df[matches_df["home_team"]==team]["match_id"]), np.array(matches_df[matches_df["away_team"]==team]["match_id"])])
 
     # loop through all matches for the team
-    all_passes = pd.DataFrame([])
+    all_passes = {}
     for matchid in match_ids:
         # get event data ...
         events = sb.events(match_id=matchid)
@@ -45,7 +45,7 @@ def get_pass_data(competition_ID, season_ID, team, data_path):
         passes_df = passes_df[passes_df["team"]==team]
 
         # store each dataframe of passing data in a dict (key=match id)
-        all_passes = pd.concat([all_passes, passes_df], axis=0)
+        all_passes[str(matchid)] = passes_df
     return all_passes
 
 
