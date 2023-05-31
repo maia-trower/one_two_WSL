@@ -19,19 +19,23 @@ def get_pass_data(competition_ID, season_ID, team, data_path):
     matches_df = sb.matches(competition_id=competition_ID, season_id=season_ID)
 
     # get id number of all matches played by specified team (home & away)
-    team = f"{team} Women's"
+    if competition_ID==53:
+        team = f"{team} Women's"
     match_ids = np.concatenate([np.array(matches_df[matches_df["home_team"]==team]["match_id"]), np.array(matches_df[matches_df["away_team"]==team]["match_id"])])
 
     # loop through all matches for the team
-    all_passes = {}
+    all_passes = pd.DataFrame([])
     for matchid in match_ids:
         # get event data ...
         events = sb.events(match_id=matchid)
-        # ... and get 360 data ...
-        threesixty = pd.read_json(f"{data_path}/{matchid}.json")
+        # ... and get 360 data if it exists ...
+        if competition_ID==53:
+            threesixty = pd.read_json(f"{data_path}/{matchid}.json")
 
-        # ... merge into single dataframe
-        df = pd.merge(left=events, right=threesixty, left_on='id', right_on='event_uuid', how='left')
+            # ... merge into single dataframe
+            df = pd.merge(left=events, right=threesixty, left_on='id', right_on='event_uuid', how='left')
+        else:
+            df = events
 
         # now filter for passes (completed passes only) ...
         passes_df = df.dropna(subset=["pass_recipient"])
@@ -41,7 +45,7 @@ def get_pass_data(competition_ID, season_ID, team, data_path):
         passes_df = passes_df[passes_df["team"]==team]
 
         # store each dataframe of passing data in a dict (key=match id)
-        all_passes[str(matchid)] = passes_df
+        all_passes = pd.concat([all_passes, passes_df], axis=0)
     return all_passes
 
 
@@ -108,7 +112,7 @@ def get_one_twos(match, sec_threshold=5, prog_threshold=0.75, carry_threshold=5)
     return all_onetwos
 
 
-def plot_match_one_twos(data, title="", save_path="", save=True, grid=False):
+def plot_match_one_twos(data, save_path="", save=True, grid=False):
     if grid:
         one_twos = np.array(data.index).reshape(-1, 2)
         df = one_twos.reshape(-1, 2)
@@ -165,4 +169,55 @@ def plot_match_one_twos(data, title="", save_path="", save=True, grid=False):
         if save:
             plt.savefig(save_path)
             plt.show()
+
+
+def plot_one_two_heatmaps(data, competition, season, team, combined=True):
+    # split into opening and closing passes
+
+    open_12 = data.loc[data.index[::2]]
+    close_12 = data.loc[data.index[1::2]]
+
+    p = Pitch(line_color="white", pitch_color="green", pitch_type="statsbomb")
+
+    fig, ax = p.grid(grid_height=0.9, title_height=0.06, axis=False, endnote_height=0, title_space=0, endnote_space=0)
+
+    kdeplot = p.kdeplot(
+        x=open_12.x_start,
+        y=open_12.y_start,
+        fill=True,
+        shade_lowest=False,
+        alpha=.5,
+        n_levels=10,
+        cmap='viridis',
+        cbar=True,
+        cbar_kws={"shrink": 0.5},
+        ax=ax['pitch']
+    )
+
+    if combined:
+        plt.savefig(f"{competition}_{season}_heatmap_open.png")
+    else:
+        plt.savefig(f"{competition}_{season}_{team}_heatmap_open.png")
+    plt.show()
+
+    fig, ax = p.grid(grid_height=0.9, title_height=0.06, axis=False, endnote_height=0, title_space=0, endnote_space=0)
+
+    kdeplot = p.kdeplot(
+        x=close_12.x_end,
+        y=close_12.y_end,
+        fill=True,
+        shade_lowest=False,
+        alpha=.5,
+        n_levels=10,
+        cmap='viridis',
+        cbar=True,
+        cbar_kws={"shrink": 0.5},
+        ax=ax['pitch']
+    )
+
+    if combined:
+        plt.savefig(f"{competition}_{season}_heatmap_close.png")
+    else:
+        plt.savefig(f"{competition}_{season}_{team}_heatmap_close.png")
+    plt.show()
 
