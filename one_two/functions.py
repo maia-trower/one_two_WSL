@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_pass_data(competition_ID, season_ID, team, data_path):
+def get_pass_data(competition_ID, season_ID, team, data_path, all_teams=False):
     """
     get all pass info (event data plus 360 data) for specified competition and season, for specified HOME team only
     :param competition_ID: int, id number of competition
@@ -21,9 +21,14 @@ def get_pass_data(competition_ID, season_ID, team, data_path):
     # get id number of all matches played by specified team (home & away)
     if competition_ID==53:
         team = f"{team} Women's"
-    match_ids = np.concatenate([np.array(matches_df[matches_df["home_team"]==team]["match_id"]), np.array(matches_df[matches_df["away_team"]==team]["match_id"])])
 
-    # loop through all matches for the team
+    if all_teams:
+        match_ids = matches_df["match_id"]
+    else:
+        match_ids = np.concatenate([np.array(matches_df[matches_df["home_team"] == team]["match_id"]),
+                                    np.array(matches_df[matches_df["away_team"] == team]["match_id"])])
+
+    # loop through all matches
     all_passes = {}
     for matchid in match_ids:
         # get event data ...
@@ -41,8 +46,9 @@ def get_pass_data(competition_ID, season_ID, team, data_path):
         passes_df = df.dropna(subset=["pass_recipient"])
         passes_df = passes_df[passes_df["pass_outcome"].isna()]
 
-        # ... and remove opposition's passes
-        passes_df = passes_df[passes_df["team"]==team]
+        if not all_teams:
+            # ... remove opposition's passes
+            passes_df = passes_df[passes_df["team"]==team]
 
         # store each dataframe of passing data in a dict (key=match id)
         all_passes[str(matchid)] = passes_df
@@ -105,11 +111,30 @@ def get_one_twos(match, sec_threshold=5, prog_threshold=0.75, carry_threshold=5)
     # select the one-twos from the original pass dataframe
     all_onetwos = match.loc[np.array(one_two_idx).reshape(1,-1)[0]]
 
-    # make extra location columns for easier plotting
-    all_onetwos[["x_start", "y_start"]] = pd.DataFrame(all_onetwos.location.tolist(), index=all_onetwos.index)
-    all_onetwos[["x_end", "y_end"]] = pd.DataFrame(all_onetwos.pass_end_location.tolist(), index=all_onetwos.index)
+    if len(one_two_idx) == 0:
+        print("No one-two passes")
+        return pd.DataFrame([])
+    else:
 
-    return all_onetwos
+        # make extra location columns for easier plotting !
+        all_onetwos[["x_start", "y_start"]] = pd.DataFrame(all_onetwos.location.tolist(), index=all_onetwos.index)
+        all_onetwos[["x_end", "y_end"]] = pd.DataFrame(all_onetwos.pass_end_location.tolist(), index=all_onetwos.index)
+
+        return all_onetwos
+
+
+def get_player_one_twos(player, data):
+    idx = []
+    for i in range(len(data)):
+        player1 = data["player"].iloc[i]
+        player2 = data["pass_recipient"].iloc[i]
+
+        if player1 == player or player2 == player:
+            idx.append(i)
+
+    data = data.iloc[idx, :]
+
+    return data
 
 
 def plot_match_one_twos(data, save_path="", save=True, grid=False):
@@ -179,45 +204,41 @@ def plot_one_two_heatmaps(data, competition, season, team, combined=True):
 
     p = Pitch(line_color="white", pitch_color="green", pitch_type="statsbomb")
 
-    fig, ax = p.grid(grid_height=0.9, title_height=0.06, axis=False, endnote_height=0, title_space=0, endnote_space=0)
+    fig, axs = p.grid(ncols=1, nrows=2,grid_height=0.9, title_height=0.06, axis=False, endnote_height=0, title_space=0, endnote_space=0)
+    plt.figure(figsize=(12, 8))
+    for i, ax in zip(np.arange(2), axs['pitch'].flat):
+        if i==0:
+            df = open_12
+        else:
+            df = close_12
 
-    kdeplot = p.kdeplot(
-        x=open_12.x_start,
-        y=open_12.y_start,
-        fill=True,
-        shade_lowest=False,
-        alpha=.5,
-        n_levels=10,
-        cmap='viridis',
-        cbar=True,
-        cbar_kws={"shrink": 0.5},
-        ax=ax['pitch']
-    )
-
-    if combined:
-        plt.savefig(f"{competition}_{season}_heatmap_open.png")
-    else:
-        plt.savefig(f"{competition}_{season}_{team}_heatmap_open.png")
-    plt.show()
-
-    fig, ax = p.grid(grid_height=0.9, title_height=0.06, axis=False, endnote_height=0, title_space=0, endnote_space=0)
-
-    kdeplot = p.kdeplot(
-        x=close_12.x_end,
-        y=close_12.y_end,
-        fill=True,
-        shade_lowest=False,
-        alpha=.5,
-        n_levels=10,
-        cmap='viridis',
-        cbar=True,
-        cbar_kws={"shrink": 0.5},
-        ax=ax['pitch']
-    )
+        kdeplot = p.kdeplot(
+            x=df.x_start,
+            y=df.y_start,
+            fill=True,
+            shade_lowest=False,
+            alpha=.5,
+            n_levels=10,
+            cmap='viridis',
+            cbar=True,
+            cbar_kws={"shrink": 0.5},
+            ax=ax
+        )
 
     if combined:
-        plt.savefig(f"{competition}_{season}_heatmap_close.png")
+        plt.savefig(f"{competition}_{season}_heatmap.png")
     else:
-        plt.savefig(f"{competition}_{season}_{team}_heatmap_close.png")
+        plt.savefig(f"{competition}_{season}_{team}_heatmap.png")
     plt.show()
 
+
+def get_team_info(count_data, agg_data):
+    teams = []
+    for i in range(len(count_data)):
+        player = count_data["player"].iloc[i]
+        team = agg_data[agg_data["player"] == player]["possession_team"].iloc[0]
+        teams.append(team)
+
+    count_data["team"] = teams
+
+    return count_data
