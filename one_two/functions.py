@@ -204,13 +204,15 @@ def plot_one_two_heatmaps(data, competition, season, team, combined=True):
 
     p = Pitch(line_color="white", pitch_color="green", pitch_type="statsbomb")
 
-    fig, axs = p.grid(ncols=1, nrows=2,grid_height=0.9, title_height=0.06, axis=False, endnote_height=0, title_space=0, endnote_space=0)
+    fig, axs = p.grid(ncols=2, nrows=1,grid_height=0.9, title_height=0.06, axis=False, endnote_height=0, title_space=0, endnote_space=0)
     plt.figure(figsize=(12, 8))
     for i, ax in zip(np.arange(2), axs['pitch'].flat):
         if i==0:
             df = open_12
+            ax.set_title("One-Two Opening Shot")
         else:
             df = close_12
+            ax.set_title("One-Two Closing Shot")
 
         kdeplot = p.kdeplot(
             x=df.x_start,
@@ -242,3 +244,25 @@ def get_team_info(count_data, agg_data):
     count_data["team"] = teams
 
     return count_data
+
+
+def key_one_two_percentage(data):
+    try:
+        shot_assists = data.pass_shot_assist.value_counts().iloc[0]
+    except Exception:
+        shot_assists = 0
+    try:
+        goal_assists = data.pass_goal_assist.value_counts().iloc[0]
+    except Exception:
+        goal_assists = 0
+
+    key_pass_pc = 100*(shot_assists + goal_assists)/(0.5*len(data))
+
+    return key_pass_pc
+
+
+def open_close_split(data):
+    open_12 = data.loc[data.index[::2]]
+    close_12 = data.loc[data.index[1::2]]
+    return opens, closes
+
