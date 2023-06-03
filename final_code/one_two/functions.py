@@ -39,17 +39,19 @@ def get_season_one_twos(comp, season, path, s, p, c):
     all_matches_passes = get_pass_data(comp, season, None, path, all_teams=True)
 
     # then get only the one-two passes and store in dict
-    one_two_dict = {}
+    # one_two_dict = {}
+    one_two_agg = pd.DataFrame([])
     for key in all_matches_passes.keys():
-        one_two_dict[key] = get_one_twos(all_matches_passes[key], sec_threshold=s, prog_threshold=p, carry_threshold=c)
+        match_one_twos = get_one_twos(all_matches_passes[key], sec_threshold=s, prog_threshold=p, carry_threshold=c)
+        one_two_agg = pd.concat([one_two_agg, match_one_twos], axis=0)
 
     # then concatenate all matches into single df
     # (note - could do this directly but dict may be more useful for later stuff - review this !)
-    one_twos_aggregated = pd.DataFrame([])
-    for key in one_two_dict.keys():
-        all_onetwos = pd.concat([one_twos_aggregated, one_two_dict[key]], axis=0)
+    # one_twos_aggregated = pd.DataFrame([])
+    # for key in one_two_dict.keys():
+    #     all_onetwos = pd.concat([one_twos_aggregated, one_two_dict[key]], axis=0)
 
-    return all_onetwos
+    return one_two_agg
 
 
 def key_one_two_percentage(data):
@@ -212,7 +214,7 @@ def get_one_twos(match, sec_threshold=5, prog_threshold=0.75, carry_threshold=5)
         return pd.DataFrame([])
     else:
 
-        # make extra location columns for easier plotting !
+        # make extra location columns for easier plotting
         all_onetwos[["x_start", "y_start"]] = pd.DataFrame(all_onetwos.location.tolist(), index=all_onetwos.index)
         all_onetwos[["x_end", "y_end"]] = pd.DataFrame(all_onetwos.pass_end_location.tolist(), index=all_onetwos.index)
 
@@ -257,10 +259,10 @@ def total_one_two_stack(one_twos, n):
     # palette = dict(zip(unique, sns.color_palette(n_colors=len(unique))))
     one_twos.sort_values(by="total_count", ascending=False).head(n).set_index("surname")[
         ["open_count", "close_count"]].plot(kind="bar", stacked=True, color=["red", "green"], ax=ax)
+    plt.xticks(rotation=90)
+    ax.set_ylabel("Count")
+    ax.set_xlabel("Player")
     plt.savefig(f"slide_plots/open_close_stack_top{n}.png")
-    plt.xticks(rotation=0)
-    plt.ylabel("Count")
-    plt.xlabel("Player")
     plt.show()
 
 
@@ -276,7 +278,7 @@ def key_pass_relplot(one_twos, n, name_labels=[]):
     # plot opening against closing, scatter plot size = key pass percentage
     sns.set(rc={"figure.figsize": (20, 15)})
 
-    p = sns.relplot(x="open_count", y="close_count", data=one_twos.head(n), hue="team", size="key_pc", sizes=(10, 500))
+    p = sns.relplot(x="open_count", y="close_count", data=one_twos.head(2*n), hue="team", size="key_pc", sizes=(10, 500))
     ax = p.axes[0, 0]
     ax.set_xlabel("Opened")
     ax.set_ylabel("Closed")
@@ -284,10 +286,10 @@ def key_pass_relplot(one_twos, n, name_labels=[]):
     for idx, row in one_twos.head(n).iterrows():
         x = row[1]
         y = row[3]
-        name = row[0]
+        name = row["player"]
         if name in [name_labels]:
             ax.text(x - 0.25, y + 0.5, name.split(" ")[-1], horizontalalignment='right')
-    plt.savefig(f"slide_plots/open_closed_key_relplot_top{n}.png")
+    plt.savefig(f"slide_plots/open_closed_key_relplot_top{2*n}.png")
     plt.show()
 
 
@@ -300,12 +302,12 @@ def plot_one_two_heatmaps(data, competition, season, team, combined=True):
     p = Pitch(line_color="white", pitch_color="green", pitch_type="statsbomb")
 
     fig, axs = p.grid(ncols=2, nrows=1,grid_height=0.9, title_height=0.06, axis=False, endnote_height=0, title_space=0, endnote_space=0)
-    plt.figure(figsize=(12, 8))
+    # plt.figure(figsize=(12, 8))
     for i, ax in zip(np.arange(2), axs['pitch'].flat):
         if i==0:
             df = open_12
             ax.set_title("One-Two Opening Shot")
-            kdeplot = p.kdeplot(
+            p.kdeplot(
             x=df.x_start,
             y=df.y_start,
             fill=True,
@@ -320,7 +322,7 @@ def plot_one_two_heatmaps(data, competition, season, team, combined=True):
         else:
             df = close_12
             ax.set_title("One-Two Closing Shot")
-            kdeplot = p.kdeplot(
+            p.kdeplot(
                 x=df.x_end,
                 y=df.y_end,
                 fill=True,
@@ -333,10 +335,9 @@ def plot_one_two_heatmaps(data, competition, season, team, combined=True):
                 ax=ax
             )
 
-
-
     if combined:
-        plt.savefig(f"{competition}_{season}_heatmap.png")
+        plt.savefig(f"slide_plots/{competition}_{season}_heatmap.png")
     else:
-        plt.savefig(f"{competition}_{season}_{team}_heatmap.png")
+        plt.savefig(f"slide_plots/{competition}_{season}_{team}_heatmap.png")
+
     plt.show()
