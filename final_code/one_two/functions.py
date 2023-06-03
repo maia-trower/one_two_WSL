@@ -259,7 +259,7 @@ def total_one_two_stack(one_twos, n):
     # palette = dict(zip(unique, sns.color_palette(n_colors=len(unique))))
     one_twos.sort_values(by="total_count", ascending=False).head(n).set_index("surname")[
         ["open_count", "close_count"]].plot(kind="bar", stacked=True, color=["red", "green"], ax=ax)
-    plt.xticks(rotation=90)
+    plt.xticks(rotation=0)
     ax.set_ylabel("Count")
     ax.set_xlabel("Player")
     plt.savefig(f"slide_plots/open_close_stack_top{n}.png")
@@ -289,6 +289,7 @@ def key_pass_relplot(one_twos, n, name_labels=[]):
         name = row["player"]
         if name in [name_labels]:
             ax.text(x - 0.25, y + 0.5, name.split(" ")[-1], horizontalalignment='right')
+
     plt.savefig(f"slide_plots/open_closed_key_relplot_top{2*n}.png")
     plt.show()
 
