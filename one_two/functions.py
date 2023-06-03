@@ -210,11 +210,7 @@ def plot_one_two_heatmaps(data, competition, season, team, combined=True):
         if i==0:
             df = open_12
             ax.set_title("One-Two Opening Shot")
-        else:
-            df = close_12
-            ax.set_title("One-Two Closing Shot")
-
-        kdeplot = p.kdeplot(
+            kdeplot = p.kdeplot(
             x=df.x_start,
             y=df.y_start,
             fill=True,
@@ -226,6 +222,23 @@ def plot_one_two_heatmaps(data, competition, season, team, combined=True):
             cbar_kws={"shrink": 0.5},
             ax=ax
         )
+        else:
+            df = close_12
+            ax.set_title("One-Two Closing Shot")
+            kdeplot = p.kdeplot(
+                x=df.x_end,
+                y=df.y_end,
+                fill=True,
+                shade_lowest=False,
+                alpha=.5,
+                n_levels=10,
+                cmap='viridis',
+                cbar=True,
+                cbar_kws={"shrink": 0.5},
+                ax=ax
+            )
+
+
 
     if combined:
         plt.savefig(f"{competition}_{season}_heatmap.png")
