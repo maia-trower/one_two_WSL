@@ -1,0 +1,11 @@
+{
+  "competition_id": 37,
+  "competition_name": "WSL",
+  "season_id": 90,
+  "players": ["Bethany Mead", "Francesca Kirby"],
+  "n": 5,
+  "path_to_360": "/home/s2113337/Documents/GitHub/open-data/data/three-sixty",
+  "threshold_seconds": 5,
+  "threshold_progression": 0.75,
+  "threshold_carry": 5
+}
