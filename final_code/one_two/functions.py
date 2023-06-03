@@ -176,7 +176,6 @@ def get_one_twos(match, sec_threshold=5, prog_threshold=0.75, carry_threshold=5)
     all_onetwos = match.loc[np.array(one_two_idx).reshape(1,-1)[0]]
 
     if len(one_two_idx) == 0:
-        print("No one-two passes")
         return pd.DataFrame([])
     else:
 
@@ -201,7 +200,6 @@ def get_team_info(count_data, agg_data):
 
 
 # plotting functions
-
 def total_one_two_stack(one_twos, n):
     """
     Generate stacked bar plot showing top n players ranked by number of 1-2 passes
@@ -221,9 +219,9 @@ def total_one_two_stack(one_twos, n):
     fig, ax = plt.subplots(figsize=(12, 8))
     # plt.title("Players With Most One-Two Passes Per Team (WSL 20/21)")
 
-    # make color dict
-    unique = one_twos["team"].unique()
-    palette = dict(zip(unique, sns.color_palette(n_colors=len(unique))))
+    # # make color dict - only for coloring by team
+    # unique = one_twos["team"].unique()
+    # palette = dict(zip(unique, sns.color_palette(n_colors=len(unique))))
     one_twos.sort_values(by="total_count", ascending=False).head(n).set_index("surname")[
         ["open_count", "close_count"]].plot(kind="bar", stacked=True, color=["red", "green"], ax=ax)
     plt.savefig(f"slide_plots/open_close_stack_top{n}.png")
