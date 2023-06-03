@@ -20,13 +20,7 @@ def main(input_file):
 
     # get data here
     one_two_agg = get_season_one_twos(comp=comp_id, season=season_id, path="", s=s_thresh, p=p_thresh, c=c_thresh)
-    open_player_counts, close_player_counts = get_player_counts(one_two_agg)
-    # combine open and close for stacked plot
-    one_two_player_counts = open_player_counts.merge(close_player_counts, on="player", how="outer").rename(
-        columns={"count_x": "open_count", "count_y": "close_count", "team_x": "team"})
-    one_two_player_counts = one_two_player_counts.drop(columns=["team_y"])
-    # add a total count col
-    one_two_player_counts["total_count"] = one_two_player_counts["open_count"] + one_two_player_counts["close_count"]
+    one_two_player_counts = get_player_counts(one_two_agg)
 
     # then do the plots in order
     # 1. stacked bar plot

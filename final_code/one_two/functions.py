@@ -51,8 +51,25 @@ def get_season_one_twos(comp, season, path, s, p, c):
 
     return all_onetwos
 
+
+def key_one_two_percentage(data):
+    try:
+        shot_assists = data.pass_shot_assist.value_counts().iloc[0]
+    except Exception:
+        shot_assists = 0
+    try:
+        goal_assists = data.pass_goal_assist.value_counts().iloc[0]
+    except Exception:
+        goal_assists = 0
+
+    key_pass_pc = 100*(shot_assists + goal_assists)/(0.5*len(data))
+
+    return key_pass_pc
+
+
 def get_player_counts(data_agg):
     # split into opening and closing passes
+    # note - could go straight to merged dataframe here ? don't need separate ones anymore
     open_agg = data_agg.iloc[::2, :]
     close_agg = data_agg.iloc[1::2, :]
 
@@ -66,7 +83,23 @@ def get_player_counts(data_agg):
     open_counts = get_team_info(open_counts, open_agg)
     close_counts = get_team_info(close_counts, close_agg)
 
-    return open_counts, close_counts
+    # combine open and close for stacked plot
+    one_two_counts = open_counts.merge(close_counts, on="player", how="outer").rename(
+        columns={"count_x": "open_count", "count_y": "close_count", "team_x": "team"})
+    one_two_counts = one_two_counts.drop(columns=["team_y"])
+    # add a total count col
+    one_two_counts["total_count"] = one_two_counts["open_count"] + one_two_counts["close_count"]
+
+    # then find key pass percentage ...
+    player_data = {}
+    pcs = []
+    for player in one_two_counts["player"]:
+        player_data[player] = get_player_one_twos(player, data_agg)
+        pc = key_one_two_percentage(player_data[player])
+        pcs.append(pc)
+
+    one_two_counts["key_pc"] = pcs
+    return one_two_counts
 
 
 def get_pass_data(competition_ID, season_ID, team, data_path, all_teams=False):
