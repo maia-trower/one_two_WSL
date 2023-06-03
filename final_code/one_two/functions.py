@@ -287,11 +287,80 @@ def key_pass_relplot(one_twos, n, name_labels=[]):
         x = row[1]
         y = row[3]
         name = row["player"]
-        if name in [name_labels]:
+        if name in name_labels:
             ax.text(x - 0.25, y + 0.5, name.split(" ")[-1], horizontalalignment='right')
 
     plt.savefig(f"slide_plots/open_closed_key_relplot_top{2*n}.png")
     plt.show()
+
+
+def plot_match_one_twos(data, save_path="", save=True, grid=False):
+    if grid:
+        one_twos = np.array(data.index).reshape(-1, 2)
+        df = one_twos.reshape(-1, 2)
+
+        # number of rows:
+        n_rows = int(np.ceil(len(df)/2))
+        n_cols = 2
+
+        p = Pitch(line_color="white", pitch_color="green", pitch_type="statsbomb")
+
+        fig, axs = p.grid(ncols=n_cols, nrows=n_rows, grid_height=0.85, title_height=0.06, axis=False, endnote_height=0,
+                          title_space=0, endnote_space=0)
+
+        plt.figure(figsize=(12, 8))
+
+        # for each one-two ...
+        for row, ax in zip(df, axs['pitch'].flat):
+            onetwodf = data.loc[row]
+
+            i = 0
+            p.arrows(xstart=onetwodf["x_start"].iloc[i], ystart=onetwodf["y_start"].iloc[i], xend=onetwodf["x_end"].iloc[i],
+                     yend=onetwodf["y_end"].iloc[i], ax=ax, width=2, headwidth=5, headlength=5, color="blue")
+            p.arrows(xstart=onetwodf["x_start"].iloc[i + 1], ystart=onetwodf["y_start"].iloc[i + 1],
+                     xend=onetwodf["x_end"].iloc[i + 1], yend=onetwodf["y_end"].iloc[i + 1], ax=ax, width=2, headwidth=5,
+                     headlength=5, color="red")
+
+            try:
+                for x in onetwodf.iloc[i + 1]["freeze_frame"]:
+                    if x["teammate"]:
+                        color = "white"
+                        p.scatter(x=x["location"][0], y=x["location"][1], ax=ax, c=color, s=100, alpha=1, marker='x')
+                    else:
+                        color = "white"
+                        p.scatter(x=x["location"][0], y=x["location"][1], ax=ax, c=color, s=100, alpha=1)
+            except Exception:
+                pass
+
+    else:
+        p = Pitch(line_color="white", pitch_color="green", pitch_type="statsbomb")
+        fig, ax = p.draw(figsize=(12, 8))
+
+        for i in range(len(data)):
+
+            if i % 2:
+                color = "blue"
+            else:
+                color = "blue"
+
+            p.arrows(xstart=data["x_start"].iloc[i], ystart=data["y_start"].iloc[i],
+                     xend=data["x_end"].iloc[i], yend=data["y_end"].iloc[i], ax=ax, width=2,
+                     headwidth=5, headlength=5, color=color)
+        try:
+            for x in data.iloc[1]["freeze_frame"]:
+                if x["teammate"]:
+                    color = "blue"
+                    p.scatter(x=x["location"][0], y=x["location"][1], ax=ax, c=color, s=100, alpha=1, marker='x')
+                else:
+                    color = "red"
+                    p.scatter(x=x["location"][0], y=x["location"][1], ax=ax, c=color, s=100, alpha=1)
+        except Exception:
+            pass
+
+        if save:
+            plt.savefig(f"slide_plots/{save_path}match_one_two_360.png")
+            plt.show()
+
 
 
 def plot_one_two_heatmaps(data, competition, season, team, combined=True):
