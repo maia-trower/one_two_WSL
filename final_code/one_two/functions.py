@@ -413,6 +413,7 @@ def plot_one_two_heatmaps(data, competition, season, team, combined=True):
     close_12 = data.loc[data.index[1::2]]
 
     p = Pitch(line_color="white", pitch_color="green", pitch_type="statsbomb")
+    p = Pitch(line_color="black", pitch_color="white", pitch_type="statsbomb")
 
     fig, axs = p.grid(ncols=2, nrows=1,grid_height=0.9, title_height=0.06, axis=False, endnote_height=0, title_space=0, endnote_space=0)
     # plt.figure(figsize=(12, 8))
