@@ -2,9 +2,15 @@ import pandas as pd
 import json
 from one_two.functions import get_pass_data, get_one_twos, get_player_one_twos, plot_match_one_twos
 
-# test change
 
 def main(input_file):
+    """
+    main function for generating all one-two passes for specified team for a specified tournament
+    also then filters by players listed in input file
+    and then plots the successful one-two with 360 information to show positions of other players
+    :param input_file: json, dictionary of inputs
+    :return: None
+    """
     # read in inputs
     with open(f"inputs/{input_file}.json", "r") as f:
         inputs = json.load(f)
