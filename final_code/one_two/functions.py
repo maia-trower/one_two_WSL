@@ -376,7 +376,7 @@ def plot_one_two_heatmaps(data, competition, season, team, combined=True):
     for i, ax in zip(np.arange(2), axs['pitch'].flat):
         if i==0:
             df = open_12
-            ax.set_title("One-Two Opening Shot")
+            ax.set_title("Opening Pass", fontsize=30)
             p.kdeplot(
             x=df.x_start,
             y=df.y_start,
@@ -391,7 +391,7 @@ def plot_one_two_heatmaps(data, competition, season, team, combined=True):
         )
         else:
             df = close_12
-            ax.set_title("One-Two Closing Shot")
+            ax.set_title("Closing Pass", fontsize=30)
             p.kdeplot(
                 x=df.x_end,
                 y=df.y_end,
