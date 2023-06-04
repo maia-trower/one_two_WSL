@@ -5,10 +5,21 @@ from mplsoccer import Pitch
 from statsbombpy import sb
 import numpy as np
 
+# TODO set plot parameters up here to make it the same across all plots
 
 # data functions
 def get_player_one_twos(player, data):
+    """
+    Given a dataframe of one-two passes, filter it to return only one-twos involving specified player
+    :param player: str, the name of the player to filter by
+    :param data: dataframe, a df of one-two passes (for match, season, team, etc ...)
+    :return: dataframe, the original dataframe filtered for player
+    """
+
+    # intialise list to store indices
     idx = []
+
+    # loop through all one-twos
     for i in range(len(data)):
         player1 = data["player"].iloc[i]
         player2 = data["pass_recipient"].iloc[i]
@@ -16,6 +27,7 @@ def get_player_one_twos(player, data):
         if player1 == player or player2 == player:
             idx.append(i)
 
+    # filter by selected indices
     data = data.iloc[idx, :]
 
     return data
@@ -33,28 +45,26 @@ def get_season_one_twos(comp, season, path, s, p, c):
     :param c: float, carry threshold for defining one-two passes
     :return: dataframe, one-two passes for season
     """
-    # this function should return a single data frame of all one-two passes for a whole season
 
     # get all passes per match
     all_matches_passes = get_pass_data(comp, season, None, path, all_teams=True)
 
-    # then get only the one-two passes and store in dict
-    # one_two_dict = {}
+    # then get only the one-two passes and store in single dataframe
     one_two_agg = pd.DataFrame([])
     for key in all_matches_passes.keys():
         match_one_twos = get_one_twos(all_matches_passes[key], sec_threshold=s, prog_threshold=p, carry_threshold=c)
         one_two_agg = pd.concat([one_two_agg, match_one_twos], axis=0)
 
-    # then concatenate all matches into single df
-    # (note - could do this directly but dict may be more useful for later stuff - review this !)
-    # one_twos_aggregated = pd.DataFrame([])
-    # for key in one_two_dict.keys():
-    #     all_onetwos = pd.concat([one_twos_aggregated, one_two_dict[key]], axis=0)
-
     return one_two_agg
 
 
 def key_one_two_percentage(data):
+    """
+    calculate how many one-twos lead to a shot or goal as a percentage
+    TODO tidy up the try/except loop (check existence of col instead ?)
+    :param data: dataframe, one-twos
+    :return:
+    """
     try:
         shot_assists = data.pass_shot_assist.value_counts().iloc[0]
     except Exception:
@@ -70,8 +80,13 @@ def key_one_two_percentage(data):
 
 
 def get_player_counts(data_agg):
+    """
+    given all one-twos for season/comp, return a dataframe of stats for each player involved in one-twos
+    :param data_agg: dataframe, contains one-two passes (e.g. per season, per comptetition etc ...)
+    :return: dataframe, df of stats per player with number of one-twos total, number opened/closed, and key percentage
+    """
     # split into opening and closing passes
-    # note - could go straight to merged dataframe here ? don't need separate ones anymore
+    # TODO could go straight to merged dataframe here (don't need separate ones anymore)
     open_agg = data_agg.iloc[::2, :]
     close_agg = data_agg.iloc[1::2, :]
 
@@ -117,10 +132,11 @@ def get_pass_data(competition_ID, season_ID, team, data_path, all_teams=False):
     # load all matches from specified competition and season
     matches_df = sb.matches(competition_id=competition_ID, season_id=season_ID)
 
-    # get id number of all matches played by specified team (home & away)
+    # TODO check how to store apostrophes in json string so I can get rid of this bit
     if competition_ID==53:
         team = f"{team} Women's"
 
+    # get id number of all matches played by specified team (home & away) or by everyone if all_teams is true
     if all_teams:
         match_ids = matches_df["match_id"]
     else:
@@ -157,11 +173,12 @@ def get_pass_data(competition_ID, season_ID, team, data_path, all_teams=False):
 def get_one_twos(match, sec_threshold=5, prog_threshold=0.75, carry_threshold=5):
     """
     returns one-two data from passing data
+    see attached report for info on thresholds
     :param match: dataframe, event and 360 data of passes
-    :param sec:
-    :param prog_threshold:
-    :param carry_threshold:
-    :return:
+    :param sec_threshold: float, time threshold for defining one-two pass
+    :param prog_threshold: float, progression threshold for defining one-two pass
+    :param carry_threshold: float, carry threshold for defining one-two passes
+    :return: dataframe, all one-twos found in passing data
     """
 
     # convert timestamp into seconds
@@ -211,9 +228,10 @@ def get_one_twos(match, sec_threshold=5, prog_threshold=0.75, carry_threshold=5)
     all_onetwos = match.loc[np.array(one_two_idx).reshape(1,-1)[0]]
 
     if len(one_two_idx) == 0:
+        # return empty frame and notify if none found
+        print("No one-twos found.")
         return pd.DataFrame([])
     else:
-
         # make extra location columns for easier plotting
         all_onetwos[["x_start", "y_start"]] = pd.DataFrame(all_onetwos.location.tolist(), index=all_onetwos.index)
         all_onetwos[["x_end", "y_end"]] = pd.DataFrame(all_onetwos.pass_end_location.tolist(), index=all_onetwos.index)
@@ -222,6 +240,12 @@ def get_one_twos(match, sec_threshold=5, prog_threshold=0.75, carry_threshold=5)
 
 
 def get_team_info(count_data, agg_data):
+    """
+    given count dataframe find the team for each player
+    :param count_data: dataframe, df of one-two stats for players
+    :param agg_data: dataframe, df of all the one-two passes from which count_data was computed
+    :return:
+    """
     teams = []
     for i in range(len(count_data)):
         player = count_data["player"].iloc[i]
@@ -238,10 +262,10 @@ def get_team_info(count_data, agg_data):
 def total_one_two_stack(one_twos, n):
     """
     Generate stacked bar plot showing top n players ranked by number of 1-2 passes
-
+    TODO find a way to add team info that doesn't make it too crowded (maybe colour by team and then shade darker/lighter for open/close ??)
     :param one_twos: dataframe, with columns player, open_count, close_count, team, total_count, key_pc
-    :param counts:
-    :param n:
+    :param counts: dataframe, datafromae of one-two stats per player
+    :param n: int, number of players to plot
     :return:
     """
     # use surnames only
@@ -252,11 +276,11 @@ def total_one_two_stack(one_twos, n):
     one_twos["surname"] = surnames
 
     fig, ax = plt.subplots(figsize=(12, 8))
-    # plt.title("Players With Most One-Two Passes Per Team (WSL 20/21)")
 
     # # make color dict - only for coloring by team
     # unique = one_twos["team"].unique()
     # palette = dict(zip(unique, sns.color_palette(n_colors=len(unique))))
+
     one_twos.sort_values(by="total_count", ascending=False).head(n).set_index("surname")[
         ["open_count", "close_count"]].plot(kind="bar", stacked=True, color=["red", "green"], ax=ax)
     plt.xticks(rotation=0)
@@ -295,6 +319,14 @@ def key_pass_relplot(one_twos, n, name_labels=[]):
 
 
 def plot_match_one_twos(data, save_path="", save=True, grid=False):
+    """
+    generate plot to display one-two passes on a pitch with 360 info to show other players if 360 freeze frame exists
+    :param data: dataframe, one-two passes
+    :param save_path: str, where to save the plot if not the default path
+    :param save: bool, whether to save it
+    :param grid: bool, True if you want to return a grid of all one-two passes in data, False if you only have one to display
+    :return:
+    """
     if grid:
         one_twos = np.array(data.index).reshape(-1, 2)
         df = one_twos.reshape(-1, 2)
@@ -322,6 +354,7 @@ def plot_match_one_twos(data, save_path="", save=True, grid=False):
                      headlength=5, color="red")
 
             try:
+                # plot other players in the frame - note that the players' locations are at the *close* of the one-two
                 for x in onetwodf.iloc[i + 1]["freeze_frame"]:
                     if x["teammate"]:
                         color = "white"
@@ -347,6 +380,7 @@ def plot_match_one_twos(data, save_path="", save=True, grid=False):
                      xend=data["x_end"].iloc[i], yend=data["y_end"].iloc[i], ax=ax, width=2,
                      headwidth=5, headlength=5, color=color)
         try:
+            # plot other players in the frame - note that the players' locations are at the *close* of the one-two
             for x in data.iloc[1]["freeze_frame"]:
                 if x["teammate"]:
                     color = "blue"
@@ -364,8 +398,17 @@ def plot_match_one_twos(data, save_path="", save=True, grid=False):
 
 
 def plot_one_two_heatmaps(data, competition, season, team, combined=True):
-    # split into opening and closing passes
+    """
+    plot heatmap for location of opening and closing passes on a 1x2 grid
+    :param data: dataframe, one-two passes to plot
+    :param competition: int/str, some identifier (i.e. name or id) for the competition (used for save path)
+    :param season: int/str, some identifier for the season
+    :param team: str, team name (could also be used for player name)
+    :param combined: bool, indicates if the data is aggregated over all teams/players
+    :return:
+    """
 
+    # split into opening and closing passes
     open_12 = data.loc[data.index[::2]]
     close_12 = data.loc[data.index[1::2]]
 

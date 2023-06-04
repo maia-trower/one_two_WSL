@@ -3,9 +3,18 @@ from one_two.functions import get_player_one_twos, plot_one_two_heatmaps, get_se
     total_one_two_stack, key_pass_relplot
 import json
 
-# TODO set params fontsize etc
+# TODO save data generated here so I can rerun plots without re-generating data
+# TODO once ^ is done then add a "if data exists" statement - if exists, load it, if not, generate it
 
 def main(input_file):
+    """
+    main function for generating plots of interest - get all one-twos for competition + season
+    then find which players are most involved and do a bar plot for that
+    then assess the one-two value and plot by open/close/value - labelling specified players
+    and for each player specified, show their open/close heatmap
+    :param input_file: json, dictionary of inputs
+    :return: None
+    """
     # read in inputs
     with open(f"inputs/{input_file}.json", "r") as f:
         inputs = json.load(f)

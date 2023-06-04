@@ -8,6 +8,7 @@ def main(input_file):
     main function for generating all one-two passes for specified team for a specified tournament
     also then filters by players listed in input file
     and then plots the successful one-two with 360 information to show positions of other players
+    TODO - change hard-coded Beth Mead plots to plot any successful one-two (i.e. one that results in an assist)
     :param input_file: json, dictionary of inputs
     :return: None
     """
